@@ -1,0 +1,25 @@
+# Work Agent SDK 依赖（Python 3.11 及以上）
+# 先在仓库根目录执行 pip install . 安装 work_agent_sdk，再执行 pip install -r requirements.txt 安装以下依赖
+
+# 必需
+pydantic>=2.6
+jsonschema>=4
+pyyaml>=6
+
+# 模型（按需安装其一或多个）
+anthropic
+openai
+dashscope
+
+# 浏览器（另需本机 Chromium，或执行 playwright install chromium）
+playwright
+
+# MCP
+mcp
+
+# Runner(secret_key=...)：加密保存 MCP 服务的 token
+cryptography
+
+# 图片处理与电脑操作
+Pillow
+pyautogui

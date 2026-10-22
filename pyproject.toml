@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "work-agent-sdk"
+version = "0.1.0"
+description = "Python 智能体框架"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.6",
+    "jsonschema>=4",
+    "pyyaml>=6",
+]
+
+[tool.setuptools.packages.find]
+include = ["work_agent_sdk*"]

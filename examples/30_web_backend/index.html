@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Work Agent SDK 示例</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+  #log > div { margin: .5rem 0; white-space: pre-wrap; }
+  .user { color: #555; }
+  .request { border: 1px solid #c90; padding: .5rem; }
+  form { display: flex; gap: .5rem; }
+  input { flex: 1; padding: .4rem; }
+</style>
+</head>
+<body>
+<div id="log"></div>
+<form id="form"><input id="text" placeholder="例如：订单 A1024 申请退款 99 元" autofocus><button>发送</button></form>
+<script>
+const log = document.getElementById("log");
+const messages = {};          // message id -> 元素，重连重放时按 id 替换，不重复添加
+let sessionId;
+
+function line(id, cls) {
+  if (!messages[id]) {
+    messages[id] = document.createElement("div");
+    messages[id].className = cls || "";
+    log.appendChild(messages[id]);
+  }
+  return messages[id];
+}
+
+function showRequest(request) {
+  const box = line(request.id, "request");
+  box.textContent = request.data.title + " ";
+  for (const approved of [true, false]) {
+    const button = document.createElement("button");
+    button.textContent = approved ? "同意" : "拒绝";
+    button.onclick = () => fetch(`/sessions/${sessionId}/requests/${request.id}`, {
+      method: "POST", headers: {"content-type": "application/json"},
+      body: JSON.stringify({value: {approved}}),
+    });
+    box.appendChild(button);
+  }
+}
+
+function handle(event) {
+  if (event.type === "message_completed" && event.message.role === "user") {
+    line(event.message.id, "user").textContent = "我：" + event.message.content.map(p => p.text || "").join("");
+  } else if (event.type === "message_updated" && event.delta && event.delta.kind === "text") {
+    line(event.message_id).textContent += event.delta.text;
+  } else if ((event.type === "message_completed" || (event.type === "message_updated" && event.message))
+             && event.message.role === "assistant") {
+    line(event.message.id).textContent = event.message.content.filter(p => p.type === "text").map(p => p.text).join("");
+  } else if (event.type === "request_opened") {
+    showRequest(event.request);
+  } else if (event.type === "request_closed") {
+    messages[event.request_id]?.remove();
+    delete messages[event.request_id];
+  }
+}
+
+async function start() {
+  const response = await fetch("/sessions", {method: "POST"});
+  sessionId = (await response.json()).session_id;
+  const source = new EventSource(`/sessions/${sessionId}/events`);
+  source.onmessage = (e) => handle(JSON.parse(e.data));
+}
+
+document.getElementById("form").onsubmit = async (e) => {
+  e.preventDefault();
+  const input = document.getElementById("text");
+  await fetch(`/sessions/${sessionId}/messages`, {
+    method: "POST", headers: {"content-type": "application/json"},
+    body: JSON.stringify({text: input.value}),
+  });
+  input.value = "";
+};
+
+start();
+</script>
+</body>
+</html>
