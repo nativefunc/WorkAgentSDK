@@ -1,0 +1,8 @@
+**
+!pyproject.toml
+!README.md
+!work_agent_sdk/**
+!examples/showcase/openmuse/server/**
+examples/showcase/openmuse/server/.env
+examples/showcase/openmuse/server/data
+**/__pycache__

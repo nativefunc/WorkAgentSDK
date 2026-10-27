@@ -1,0 +1,6 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+dashscope>=1.24.3
+playwright>=1.45
+Pillow>=10

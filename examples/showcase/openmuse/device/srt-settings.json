@@ -1,0 +1,15 @@
+{
+  "network": {
+    "deniedDomains": [
+      "169.254.169.254",
+      "metadata.google.internal",
+      "metadata.azure.com",
+      "100.100.100.200"
+    ],
+    "allowLocalBinding": false,
+    "allowAllUnixSockets": false
+  },
+  "filesystem": {
+    "allowGitConfig": false
+  }
+}

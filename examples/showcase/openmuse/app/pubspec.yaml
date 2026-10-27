@@ -1,0 +1,28 @@
+name: openmuse
+description: OpenMuse - a personal agent app with an iOS 26 style liquid glass UI.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.10.0
+  flutter: ">=3.38.0"
+
+dependencies:
+  dio: ^5.11.1
+  flutter:
+    sdk: flutter
+  flutter_secure_storage: ^11.2.0
+  file_picker: 13.1.0
+  url_launcher: ^6.3.3
+  web: ^1.1.2
+  web_socket_channel: ^3.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  shaders:
+    - shaders/glass_refraction.frag

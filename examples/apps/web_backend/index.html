@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Work Agent SDK</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+  #log > div { margin: .5rem 0; white-space: pre-wrap; }
+  .user { color: #555; }
+  .tool { color: #888; font-size: .9em; }
+  .request { border: 1px solid #c90; padding: .5rem; }
+  form { display: flex; gap: .5rem; }
+  input { flex: 1; padding: .4rem; }
+</style>
+</head>
+<body>
+<div id="log"></div>
+<form id="form">
+  <input id="text" placeholder="e.g. Refund 99 yuan for order A1024" autofocus>
+  <button>Send</button>
+  <button type="button" id="stop">Stop</button>
+</form>
+<script>
+const USER = "demo";
+const log = document.getElementById("log");
+const blocks = {};
+let sessionId;
+
+function api(path, body) {
+  return fetch(`/sessions${path}?user=${USER}`, {
+    method: "POST",
+    headers: {"content-type": "application/json"},
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+function block(id, className) {
+  if (!blocks[id]) {
+    blocks[id] = document.createElement("div");
+    blocks[id].className = className || "";
+    log.appendChild(blocks[id]);
+  }
+  return blocks[id];
+}
+
+function textOf(message) {
+  return message.content.filter(part => part.type === "text").map(part => part.text).join("");
+}
+
+function showRequest(request) {
+  const box = block(request.id, "request");
+  box.textContent = request.data.title + " ";
+  for (const approved of [true, false]) {
+    const button = document.createElement("button");
+    button.textContent = approved ? "Approved" : "Denied";
+    button.onclick = () => api(`/${sessionId}/requests/${request.id}`, {value: {approved}});
+    box.appendChild(button);
+  }
+}
+
+function handle(event) {
+  const message = event.message;
+  if (event.type === "message_completed" && message.role === "user") {
+    block(message.id, "user").textContent = "Me: " + textOf(message);
+  } else if (event.type === "message_started" && message.role === "tool") {
+    block(message.id, "tool").textContent = `Calling ${message.tool_name}`;
+  } else if (event.type === "message_updated" && event.delta && event.delta.kind === "text") {
+    block(event.message_id).textContent += event.delta.text;
+  } else if ((event.type === "message_updated" || event.type === "message_completed") && message && message.role === "assistant") {
+    block(message.id).textContent = textOf(message);
+  } else if (event.type === "request_opened") {
+    showRequest(event.request);
+  } else if (event.type === "request_closed") {
+    blocks[event.request_id]?.remove();
+    delete blocks[event.request_id];
+  }
+}
+
+async function start() {
+  const response = await api("");
+  sessionId = (await response.json()).session_id;
+  const source = new EventSource(`/sessions/${sessionId}/events?user=${USER}`);
+  source.onmessage = event => handle(JSON.parse(event.data));
+}
+
+document.getElementById("form").onsubmit = async event => {
+  event.preventDefault();
+  const input = document.getElementById("text");
+  await api(`/${sessionId}/messages`, {text: input.value});
+  input.value = "";
+};
+
+document.getElementById("stop").onclick = () => api(`/${sessionId}/stop`);
+
+start();
+</script>
+</body>
+</html>

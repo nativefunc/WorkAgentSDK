@@ -1,0 +1,49 @@
+from __future__ import annotations
+
+import os
+import re
+
+# By default commands only get the following environment variables from the executing node; other variables in the backend process (database addresses, keys, etc.) are never passed
+INHERITED_NAMES = frozenset(
+    {
+        "PATH",
+        "HOME",
+        "USER",
+        "LOGNAME",
+        "SHELL",
+        "LANG",
+        "LANGUAGE",
+        "TERM",
+        "TZ",
+        "DISPLAY",
+        "XAUTHORITY",
+        "WAYLAND_DISPLAY",
+        "XDG_RUNTIME_DIR",
+        "SYSTEMROOT",
+        "WINDIR",
+        "COMSPEC",
+        "PATHEXT",
+        "USERPROFILE",
+        "APPDATA",
+        "LOCALAPPDATA",
+        "TEMP",
+        "TMP",
+    }
+)
+
+
+def is_inherited(name: str, extra: tuple[str, ...] | list[str] = ()) -> bool:
+    return name in INHERITED_NAMES or name.startswith("LC_") or name in extra
+
+
+ENV_VAR_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def check_command_env(env: dict[str, str]) -> None:
+    for name in env:
+        if not ENV_VAR_NAME.fullmatch(name):
+            raise PermissionError(f"Invalid environment variable name: {name!r}")
+
+
+def inherited_variables(extra: list[str] | tuple[str, ...] = ()) -> dict[str, str]:
+    return {name: value for name, value in os.environ.items() if is_inherited(name, extra)}

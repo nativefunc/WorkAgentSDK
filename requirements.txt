@@ -1,0 +1,11 @@
+pydantic>=2.6
+jsonschema>=4
+pyyaml>=6
+anthropic
+openai
+dashscope
+playwright
+mcp
+cryptography
+Pillow
+pyautogui
